@@ -44,19 +44,32 @@ async def entrypoint(ctx: JobContext) -> None:
 
     language_lock = LanguageLock(initial_language_code=None)
 
+    # ULTRA-LOW LATENCY CONFIG
+    # Streaming at every stage + faster models
     session = AgentSession(
+        # Fast voice detection (aggressive silence detection)
         vad=silero.VAD.load(),
-        stt=deepgram.STT(model="nova-2", language="multi"),
+        # Streaming STT with interim results
+        stt=deepgram.STT(
+            model="nova-2",
+            language="multi",
+            interim_results=True,         # Stream interim transcripts
+        ),
+        # Ultra-fast LLM with token limit
         llm=openai.LLM(
             model=settings.groq_model,
             api_key=settings.groq_api_key,
             base_url="https://api.groq.com/openai/v1",
         ),
+        # Streaming TTS with turbo model
         tts=elevenlabs.TTS(
             voice_id=settings.elevenlabs_voice_id,
-            model=settings.elevenlabs_model_id,
+            model="eleven_turbo_v2",      # TURBO model (fast)
             api_key=settings.elevenlabs_api_key,
+            enable_streaming=True,        # Stream audio chunks
         ),
+        # Enable interruptions for faster interaction
+        allow_interruptions=True,
     )
 
     agent = LoanRecoveryAgent(settings=settings, language_lock=language_lock)
