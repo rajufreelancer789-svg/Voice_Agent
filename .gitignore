@@ -1,0 +1,18 @@
+# Environment
+.env
+
+# OAuth / credentials
+credentials.json
+token.json
+
+# Local database
+*.db
+*.sqlite
+*.sqlite3
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
