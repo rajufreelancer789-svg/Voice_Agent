@@ -106,7 +106,7 @@ async def _start_outbound_call(
     customer_id: int | None = None,
     loan_id: int | None = None,
 ) -> OutboundCallResponse:
-    agent_name = os.getenv("AGENT_DISPATCH_NAME", "loan-recovery-agent")
+    agent_name = "loan-recovery-agent-local"
     sip_outbound_trunk_id = _required_env("LIVEKIT_SIP_OUTBOUND_TRUNK_ID")
 
     room_name = _build_room_name(payload.loan_id)
@@ -148,7 +148,7 @@ async def _start_outbound_call(
                     participant_identity=f"customer-{payload.loan_id}",
                     participant_name=payload.customer_name,
                     participant_metadata=json.dumps(metadata),
-                    wait_until_answered=True,
+                    wait_until_answered=False,
                     ringing_timeout=timedelta(seconds=40),
                     play_dialtone=False,
                 )

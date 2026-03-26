@@ -3,13 +3,20 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from langdetect import LangDetectException, detect
-
 LANGUAGE_LABELS: dict[str, str] = {
     "en": "English",
     "hi": "Hindi",
     "te": "Telugu",
     "ta": "Tamil",
+}
+
+# ElevenLabs voice IDs with native language accents
+# These should be configured via environment variables for your specific voices
+LANGUAGE_VOICES: dict[str, str] = {
+    "en": "EXAVITQu4vr4xnSDxMaL",  # Default English voice
+    "hi": "HINDI_VOICE_ID",         # Hindi speaker - configure via ELEVENLABS_VOICE_ID_HI
+    "te": "TELUGU_VOICE_ID",        # Telugu speaker - configure via ELEVENLABS_VOICE_ID_TE
+    "ta": "TAMIL_VOICE_ID",         # Tamil speaker - configure via ELEVENLABS_VOICE_ID_TA
 }
 
 SWITCH_PATTERNS: dict[str, tuple[str, ...]] = {
@@ -80,14 +87,12 @@ class LanguageLock:
 
     def system_rule(self) -> str:
         locked = self.state.language_label
-        return (
-            "Language policy:\n"
-            f"- Current locked language: {locked}.\n"
-            "- Always reply in the customer's current speaking language.\n"
-            "- Do not switch language for code-mixed speech.\n"
-            "- If customer clearly shifts language, shift your replies to that language.\n"
-            "- If customer asks to switch, acknowledge once in current language and continue in new language."
-        )
+        return f"Reply in {locked}. Switch only if customer clearly changes language."
+
+    def get_voice_for_language(self, voice_map: dict[str, str]) -> str:
+        """Get the ElevenLabs voice_id for the current language."""
+        code = self.state.language_code or "en"
+        return voice_map.get(code, voice_map.get("en", "EXAVITQu4vr4xnSDxMaL"))
 
     def _strong_language_signal(self, text: str, detected_language: str) -> bool:
         if detected_language == "te" and TELUGU_RANGE.search(text):
@@ -130,9 +135,4 @@ class LanguageLock:
         if marker_hits >= 2:
             return "te"
 
-        try:
-            guessed = detect(text)
-        except LangDetectException:
-            return "en"
-
-        return guessed if guessed and guessed.isalpha() else "en"
+        return "en"
